@@ -1,10 +1,12 @@
 for i in $(seq 1 9999)
 do
-    count=$(./karaf-client 1 showsvcstatus | grep 'System ready state: ACTIVE' | wc -l)
-    if [ "$count" = "3" ]
+    count=$(expr $(curl -s -u admin:admin 172.28.5.1:8181/jolokia/read/org.opendaylight.controller:Category=ShardManager,name=shard-manager-operational,type=DistributedOperationalDatastore | jq . | egrep SyncStatus | wc -l) + $(curl -s -u admin:admin 172.28.5.2:8181/jolokia/read/org.opendaylight.controller:Category=ShardManager,name=shard-manager-operational,type=DistributedOperationalDatastore | jq . | egrep SyncStatus | wc -l) + $(curl -s -u admin:admin 172.28.5.3:8181/jolokia/read/org.opendaylight.controller:Category=ShardManager,name=shard-manager-operational,type=DistributedOperationalDatastore | jq . | egrep SyncStatus | wc -l))
+
+    if  [ "$count" = "3" ]
     then
+        echo "Found all three controllers with SyncStatus \"true\" for \"shard-manager-operational\"."
         exit 0
     fi
-    echo Only $count nodes up, waiting 15 seconds...
-    sleep 15
+    echo Only $count nodes up, waiting 5 seconds...
+    sleep 5
 done

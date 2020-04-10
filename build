@@ -1,44 +1,32 @@
 set -x
-path=$1
-if [ "$path" = "" ]
+if [ "$1" = "" ] || [ "$2" = "" ]
 then
-    echo Usage: ./build \<path to netvirt\>
+    echo Usage: ./build \<path to unzipped or built distribution\> \<comma separated features to install\>
     exit 2
 fi
-targetpath=${path}/karaf/target
-feature="odl-netvirt-openstack"
-if [[ $1 = *"hwvtepsouthbound"* ]];
-then
-    targetpath="$1/hwvtepsouthbound-karaf/target"
-    feature="odl-hwvtepsouthbound-rest"
-elif [[ $1 = *"southbound"* ]];
-then
-    targetpath="$1/southbound-karaf/target"
-    feature="odl-southbound-rest"
-elif [[ $1 = *"genius"* ]];
-then
-    feature="odl-genius-rest"
-elif [[ $1 = *"neutron"* ]];
-then
-    feature="odl-neutron-service"
-fi
 
-wget -O ${targetpath}/assembly/bin/configure_cluster.sh https://raw.githubusercontent.com/opendaylight/integration-distribution/master/karaf/src/main/assembly/bin/configure_cluster.sh
-chmod +x ${targetpath}/assembly/bin/configure_cluster.sh
+targetpath=$1
+featuresBoot=$2
+
+wget -O ${targetpath}/bin/configure_cluster.sh https://raw.githubusercontent.com/opendaylight/integration-distribution/master/opendaylight/src/main/assembly/bin/configure_cluster.sh
+chmod +x ${targetpath}/bin/configure_cluster.sh
 
 for i in 1 2 3
 do
     base=./mounts/${i}
 
-    sudo mount -t overlay | grep -o "mounts/${i}/assembly" | xargs sudo umount
+    # FIXME: if there is no output to 'sudo mount -t overlay' to grep and pass to xargs
+    # you end up with the mount --help output which can confuse n00bs
+
+    sudo mount -t overlay | grep -o "mounts/${i}/" | xargs sudo umount
     sudo rm -fr $base
 
-    mkdir -p ${base}/assembly
+    mkdir -p ${base}
     mkdir -p ${base}/workdir
     mkdir -p ${base}/upper
-    sudo mount -t overlay overlay -o lowerdir=${targetpath}/assembly,upperdir=${base}/upper,workdir=${base}/workdir ${base}/assembly
+    sudo mount -t overlay overlay -o lowerdir=${targetpath},upperdir=${base}/upper,workdir=${base}/workdir ${base}/
 
-    sed -i -e "s/\(featuresBoot =.*\)/\1,${feature}/" ${base}/assembly/etc/org.apache.karaf.features.cfg 
+    sed -i -e "s/\(featuresBoot =.*\)/\1,${featuresBoot}/" ${base}/etc/org.apache.karaf.features.cfg 
 done
 
 sudo docker build . -t odl

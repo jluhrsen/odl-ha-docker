@@ -8,10 +8,10 @@ do
     echo Starting $i...
     if [ "$START_METHOD" = "bg" ]; then
       echo "starting odl_172.28.5.$i with bin/start"
-      sudo docker exec odl_172.28.5.$i /odlha/karaf/target/assembly/bin/start
+      sudo docker exec odl_172.28.5.$i /odlha/bin/start
     else
       echo "starting odl_172.28.5.$i with bin/karaf"
-      sudo docker exec -td odl_172.28.5.$i /odlha/karaf/target/assembly/bin/karaf
+      sudo docker exec -td odl_172.28.5.$i /odlha/bin/karaf
     fi
     sleep ${SLEEP:=5}
 done

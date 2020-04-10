@@ -7,4 +7,4 @@ then
 fi 
 
 shift
-./shell $index /odlha/karaf/target/assembly/bin/client $@
+./shell $index /odlha/bin/client $@
